@@ -79,6 +79,7 @@ namespace RemoteTechAutoScan
             communication.Clear(); // clean up the list
             communication = null;
             var dishTarget = dish.RTAntennaTarget;
+
             // Assume that the current target is the last point we started at.
             if (FlightGlobals.Vessels != null && FlightGlobals.Vessels.Count > 1)
             {

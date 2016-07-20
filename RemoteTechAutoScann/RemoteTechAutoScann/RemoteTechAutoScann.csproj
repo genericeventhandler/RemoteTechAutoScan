@@ -60,7 +60,19 @@
     <Compile Include="RemoteTechAutoScanStartup.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
   </ItemGroup>
+  <ItemGroup />
+  <ItemGroup>
+    <Content Include="GameData\GenericEventHandler\Plugins\RemoteTechAutoScan.dll" />
+  </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
+  <PropertyGroup>
+    <PostBuildEvent>"e:\Games\Tools\pdb2mdb\pdb2mdb.exe" "$(TargetFileName)"
+xcopy /Y "$(TargetPath)" "e:\Games\Kerbal\GameData\GenericEventHandler\Plugins\"
+xcopy /Y "$(TargetDir)$(TargetName).pdb" "e:\Games\Kerbal\GameData\GenericEventHandler\Plugins\"
+xcopy /Y "$(TargetDir)$(TargetName).dll.mdb" "e:\Games\Kerbal\GameData\GenericEventHandler\Plugins\"
+xcopy /y "$(TargetDir)*.cfg" "e:\games\kerbal\gamedata\GenericEventHandler\Plugins\"
+xcopy /Y "$(TargetPath)" "$(SolutionDir)\RemoteTechAutoScann\GameData\GenericEventHandler\Plugins\"</PostBuildEvent>
+  </PropertyGroup>
   <!-- To modify your build process, add your task inside one of the targets below and uncomment it. 
        Other similar extension points exist, see Microsoft.Common.targets.
   <Target Name="BeforeBuild">
