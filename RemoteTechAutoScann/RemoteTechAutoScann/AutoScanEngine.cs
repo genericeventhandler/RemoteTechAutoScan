@@ -1,5 +1,4 @@
-﻿
-namespace RemoteTechAutoScan
+﻿namespace RemoteTechAutoScan
 {
     using RemoteTech.Modules;
     using System;
@@ -8,29 +7,29 @@ namespace RemoteTechAutoScan
     using UnityEngine;
     using RT = RemoteTech.API;
 
-    [KSPAddon(KSPAddon.Startup.MainMenu, true)]
-    public class RemoteTechAutoScanStartup : MonoBehaviour
+    internal class AutoScanEngine
     {
-        private int counter; 
-        public RemoteTechAutoScanStartup()
-        {
-            DontDestroyOnLoad(this);
-        }
+        private static readonly object LockObject = new object();
+        private static AutoScanEngine instance;
 
-        public void FixedUpdate()
+        internal static AutoScanEngine Instance
         {
-           
-
-        }
-
-        public void Update()
-        {
-            // runs very often so we slow it down
-            if (counter++ % 10 != 0)
+            get
             {
-                return;
-            }
+                lock(LockObject)
+                {
+                    if(instance == null)
+                    {
+                        instance = new AutoScanEngine();
+                    }
 
+                    return instance;
+                }
+            }
+        }
+
+        internal void DoAutoScan()
+        {
             // if Remote tech is turned off, then just quit
             if (!RT.API.IsRemoteTechEnabled())
             {
@@ -48,34 +47,37 @@ namespace RemoteTechAutoScan
             }
 
             // Do we have a valid Connection?
-            if(RT.API.HasAnyConnection(id))
+            if (RT.API.HasAnyConnection(id))
             {
                 return;
             }
 
-            // Vessel doesn't have an active connection. 
             DoPartSearch(vessel);
         }
-
         private void DoPartSearch(Vessel vessel)
         {
             // Get all the antennas from this ship
             var communication = new List<ModuleRTAntenna>();
-            foreach(var p in vessel.Parts)
+            foreach (var p in vessel.Parts)
             {
                 var pm = p.Modules;
-                for(int i=0; i < pm.Count; i++)
+                for (int i = 0; i < pm.Count; i++)
                 {
                     var antenna = pm[i] as ModuleRTAntenna;
-                    if(antenna != null)
+                    if (antenna != null)
                     {
-                            communication.Add(antenna);
+                        communication.Add(antenna);
                     }
                 }
             }
 
             // order them in priority, range first
-            var dish = communication.OrderByDescending(x => x.RTDishRange).ThenBy(x => x.isActiveAndEnabled).FirstOrDefault();
+            var dish = communication.OrderByDescending(x => x.RTDishRange).ThenBy(x => x.isActiveAndEnabled).ThenBy(x => x.GetInstanceID()).FirstOrDefault();
+            if(dish == null)
+            {
+                return;
+            }
+
             communication.Clear(); // clean up the list
             communication = null;
             var dishTarget = dish.RTAntennaTarget;
@@ -83,7 +85,7 @@ namespace RemoteTechAutoScan
             // Assume that the current target is the last point we started at.
             if (FlightGlobals.Vessels != null && FlightGlobals.Vessels.Count > 1)
             {
-                var vessels = FlightGlobals.Vessels.OrderBy(x => x.id).ToList();
+                var vessels = FlightGlobals.Vessels.Where(x => x.id != Guid.Empty).OrderBy(x => x.id).ToList();
 
                 // loop until we find the current target.
                 var loopVessels = 0;
@@ -114,8 +116,6 @@ namespace RemoteTechAutoScan
                 vessels.Clear();
                 vessels = null;
             }
-
-           
         }
     }
 }
